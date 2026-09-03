@@ -19,13 +19,19 @@
 
     <main class="contenido">
       <form id="form-accion" novalidate>
-        <!-- Tipo de acción (categoría) -->
+        <!-- HU04: la categoría se elige en un selector visual -->
         <div class="campo" id="campo-categoria">
-          <label for="categoria">Tipo de acción</label>
-          <select id="categoria" name="categoria">
-            <option value="">Seleccionar tipo</option>
-            <!-- Las opciones se cargan desde el backend (/api/categorias) -->
-          </select>
+          <label for="abrir-categorias">Tipo de acción</label>
+          <input type="hidden" id="categoria" name="categoria" />
+          <button
+            type="button"
+            id="abrir-categorias"
+            class="selector-categoria"
+            aria-haspopup="dialog"
+          >
+            <span id="categoria-seleccionada">Seleccionar tipo</span>
+            <span aria-hidden="true">›</span>
+          </button>
           <div class="error-campo" id="error-categoria"></div>
         </div>
 
@@ -51,9 +57,25 @@
       </form>
     </main>
 
+    <dialog id="dialogo-categorias" class="dialogo-categorias" aria-labelledby="titulo-categorias">
+      <form method="dialog" class="panel-categorias">
+        <header class="encabezado encabezado-dialogo">
+          <button type="button" id="cerrar-categorias" class="boton-icono" aria-label="Cerrar">←</button>
+          <h2 id="titulo-categorias">Tipo de acción</h2>
+        </header>
+        <div id="lista-categorias" class="lista-categorias" role="radiogroup" aria-label="Tipos de acción">
+          <p class="cargando">Cargando tipos de acción...</p>
+        </div>
+        <div class="pie-dialogo">
+          <button type="button" id="confirmar-categoria" class="boton-primario" disabled>Confirmar</button>
+        </div>
+      </form>
+    </dialog>
+
     <!-- Navegación inferior -->
     <nav class="nav-inferior">
       <a href="registrar.html" class="activo"><span class="icono">➕</span>Registrar</a>
+      <a href="historial.html"><span class="icono">📋</span>Historial</a>
       <a href="ranking.html"><span class="icono">🏆</span>Ranking</a>
       <a href="impacto.html"><span class="icono">📊</span>Impacto</a>
     </nav>

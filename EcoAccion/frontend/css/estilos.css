@@ -99,7 +99,8 @@ body {
 
 .campo select,
 .campo input,
-.campo textarea {
+.campo textarea,
+.selector-categoria {
   width: 100%;
   padding: 14px;
   font-size: 15px;
@@ -110,9 +111,27 @@ body {
   font-family: inherit;
 }
 
+.selector-categoria {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.selector-categoria > span:last-child {
+  font-size: 24px;
+  line-height: 14px;
+  transform: rotate(90deg);
+  color: var(--gris-suave);
+}
+
+.selector-categoria.con-seleccion { color: var(--gris-texto); }
+
 .campo select:focus,
 .campo input:focus,
-.campo textarea:focus {
+.campo textarea:focus,
+.selector-categoria:focus {
   outline: none;
   border-color: var(--verde);
   box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.12);
@@ -126,7 +145,8 @@ body {
 /* Marca de campo inválido */
 .campo.invalido select,
 .campo.invalido input,
-.campo.invalido textarea {
+.campo.invalido textarea,
+.campo.invalido .selector-categoria {
   border-color: var(--error);
   box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.12);
 }
@@ -143,6 +163,95 @@ body {
   font-size: 12.5px;
   margin-top: 6px;
   min-height: 16px;
+}
+
+/* -------------------------------------------------------------------------
+   Selector de tipo de acción (HU04)
+   ------------------------------------------------------------------------- */
+.dialogo-categorias {
+  width: calc(100% - 32px);
+  max-width: 388px;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow: hidden;
+  color: var(--gris-texto);
+  background: var(--blanco);
+  border: 0;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.dialogo-categorias::backdrop { background: rgba(21, 30, 26, 0.5); }
+
+.panel-categorias {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+}
+
+.encabezado-dialogo { flex-shrink: 0; }
+.encabezado-dialogo h2 { margin: 0; font-size: 19px; }
+
+.boton-icono {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font: inherit;
+  font-size: 22px;
+  color: var(--gris-texto);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.boton-icono:hover { background: var(--fondo); }
+
+.lista-categorias {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  overflow-y: auto;
+}
+
+.opcion-categoria {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.opcion-categoria:has(input:checked) {
+  border-color: var(--verde);
+  background: #f1f9f4;
+}
+
+.opcion-categoria input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--verde);
+  flex-shrink: 0;
+}
+
+.icono-categoria { width: 27px; text-align: center; font-size: 24px; }
+
+.textos-categoria { display: flex; flex: 1; flex-direction: column; gap: 3px; }
+.textos-categoria strong { font-size: 14px; }
+.textos-categoria small { line-height: 1.25; color: var(--gris-suave); }
+.puntos-categoria { font-size: 12px; font-weight: 700; color: var(--verde); }
+
+.pie-dialogo {
+  flex-shrink: 0;
+  padding: 0 20px 20px;
+  background: var(--blanco);
 }
 
 .boton-primario {
@@ -348,6 +457,54 @@ body {
 }
 
 /* -------------------------------------------------------------------------
+   Historial de acciones (HU03)
+   ------------------------------------------------------------------------- */
+.resumen-historial {
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--gris-suave);
+}
+
+.aviso-historial { margin: 0 0 14px; }
+.lista-historial { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.accion-historial {
+  display: flex;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+}
+
+.icono-historial {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  font-size: 22px;
+  background: #e6f4ec;
+  border-radius: 12px;
+}
+
+.detalle-historial { min-width: 0; flex: 1; }
+.cabecera-accion { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
+.cabecera-accion h2 { margin: 0; font-size: 15px; }
+.puntos-historial { white-space: nowrap; font-size: 13px; color: var(--verde); }
+.detalle-historial time { display: block; margin-top: 4px; font-size: 12px; color: var(--gris-suave); }
+.detalle-historial p { margin: 9px 0 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.4; }
+.ods-historial {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 7px;
+  font-size: 10px;
+  color: var(--verde-osc);
+  background: #e6f4ec;
+  border-radius: 999px;
+}
+
+/* -------------------------------------------------------------------------
    Barra de navegación inferior (compartida)
    ------------------------------------------------------------------------- */
 .nav-inferior {
@@ -360,7 +517,7 @@ body {
   flex: 1;
   text-align: center;
   padding: 12px 0;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--gris-suave);
   text-decoration: none;
 }

@@ -1,8 +1,9 @@
 """
 app.py — Backend de EcoAccion (Flask).
 
-Expone la API REST para dos historias de usuario:
+Expone la API REST para las historias de usuario:
   - HU03: registrar una acción sostenible  ->  POST /api/acciones
+  - HU04: clasificar la acción             ->  GET  /api/categorias
   - HU08: consultar el ranking             ->  GET  /api/ranking
 
 Además sirve el frontend estático (carpeta ../frontend) para que todo
@@ -92,6 +93,7 @@ def registrar_accion():
     ods = db.CATEGORIAS[categoria]["ods"]
 
     # --- Persistencia con manejo de errores ---
+    conn = None
     try:
         conn = db.get_connection()
         cur = conn.cursor()
@@ -102,21 +104,25 @@ def registrar_accion():
             """,
             (usuario["id"], categoria, fecha, descripcion, puntos, ods),
         )
+        accion_id = cur.lastrowid
         # Cada acción suma puntos al perfil -> alimenta el ranking (HU08)
         cur.execute(
             "UPDATE usuarios SET puntos = puntos + ? WHERE id = ?;",
             (puntos, usuario["id"]),
         )
         conn.commit()
-        accion_id = cur.lastrowid
-        conn.close()
     except Exception as exc:  # noqa: BLE001 - queremos notificar cualquier fallo
+        if conn is not None:
+            conn.rollback()
         # Notifica al usuario si el registro falla (criterio de aceptación)
         return jsonify({
             "ok": False,
             "mensaje": "No se pudo guardar la acción. Inténtalo de nuevo.",
             "detalle": str(exc),
         }), 500
+    finally:
+        if conn is not None:
+            conn.close()
 
     return jsonify({
         "ok": True,
@@ -133,11 +139,58 @@ def registrar_accion():
     }), 201
 
 
+@app.route("/api/acciones", methods=["GET"])
+def listar_acciones():
+    """Devuelve el historial del usuario autenticado, de más reciente a más antiguo."""
+    usuario = db.get_usuario_actual()
+    if usuario is None:
+        return jsonify({"ok": False, "mensaje": "No hay un usuario autenticado."}), 401
+
+    conn = db.get_connection()
+    filas = conn.execute(
+        """
+        SELECT id, categoria, fecha, descripcion, puntos, ods
+        FROM acciones
+        WHERE usuario_id = ?
+        ORDER BY fecha DESC, creada_en DESC, id DESC;
+        """,
+        (usuario["id"],),
+    ).fetchall()
+    conn.close()
+
+    acciones = []
+    for fila in filas:
+        categoria = db.get_categoria(fila["categoria"]) or {}
+        acciones.append({
+            "id": fila["id"],
+            "categoria": fila["categoria"],
+            "categoria_nombre": categoria.get("nombre", fila["categoria"]),
+            "categoria_icono": categoria.get("icono", "🌱"),
+            "fecha": fila["fecha"],
+            "descripcion": fila["descripcion"],
+            "puntos": fila["puntos"],
+            "ods": fila["ods"],
+        })
+
+    return jsonify({
+        "ok": True,
+        "usuario": usuario["nombre"],
+        "acciones": acciones,
+    })
+
+
 @app.route("/api/categorias", methods=["GET"])
 def listar_categorias():
-    """Devuelve las categorías disponibles para llenar el <select> del formulario."""
+    """Devuelve las categorías disponibles para clasificar una acción (HU04)."""
     categorias = [
-        {"valor": clave, "puntos": info["puntos"], "ods": info["ods"]}
+        {
+            "valor": clave,
+            "nombre": info["nombre"],
+            "descripcion": info["descripcion"],
+            "icono": info["icono"],
+            "puntos": info["puntos"],
+            "ods": info["ods"],
+        }
         for clave, info in db.CATEGORIAS.items()
     ]
     return jsonify({"ok": True, "categorias": categorias})

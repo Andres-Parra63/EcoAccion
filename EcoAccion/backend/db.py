@@ -19,30 +19,64 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "ecoaccion.db")
 # categoría y alimentan la HU06 ("visualizar impacto ambiental").
 CATEGORIAS = {
     "reciclaje": {
+        "nombre": "Reciclaje",
+        "descripcion": "Reciclar materiales",
+        "icono": "♻️",
         "puntos": 20, "ods": "ODS 12 - Producción y consumo responsables",
         "impacto": {"co2": 2, "agua": 0, "energia": 0, "arboles": 0},
     },
-    "movilidad": {
-        "puntos": 25, "ods": "ODS 11 - Ciudades y comunidades sostenibles",
-        "impacto": {"co2": 3, "agua": 0, "energia": 0, "arboles": 0},
-    },
-    "ahorro_energia": {
-        "puntos": 15, "ods": "ODS 7 - Energía asequible y no contaminante",
-        "impacto": {"co2": 1, "agua": 0, "energia": 5, "arboles": 0},
-    },
     "ahorro_agua": {
+        "nombre": "Ahorro de agua",
+        "descripcion": "Usar el agua de manera responsable",
+        "icono": "💧",
         "puntos": 15, "ods": "ODS 6 - Agua limpia y saneamiento",
         "impacto": {"co2": 0, "agua": 40, "energia": 0, "arboles": 0},
     },
-    "consumo_local": {
-        "puntos": 10, "ods": "ODS 12 - Producción y consumo responsables",
-        "impacto": {"co2": 1, "agua": 0, "energia": 0, "arboles": 0},
+    "ahorro_energia": {
+        "nombre": "Ahorro de energía",
+        "descripcion": "Reducir el consumo de energía",
+        "icono": "💡",
+        "puntos": 15, "ods": "ODS 7 - Energía asequible y no contaminante",
+        "impacto": {"co2": 1, "agua": 0, "energia": 5, "arboles": 0},
+    },
+    "transporte_sostenible": {
+        "nombre": "Transporte sostenible",
+        "descripcion": "Usar bicicleta, caminar o transporte público",
+        "icono": "🚲",
+        "puntos": 25, "ods": "ODS 11 - Ciudades y comunidades sostenibles",
+        "impacto": {"co2": 3, "agua": 0, "energia": 0, "arboles": 0},
     },
     "reforestacion": {
+        "nombre": "Reforestación",
+        "descripcion": "Plantar árboles y cuidar áreas verdes",
+        "icono": "🌳",
         "puntos": 30, "ods": "ODS 15 - Vida de ecosistemas terrestres",
         "impacto": {"co2": 5, "agua": 0, "energia": 0, "arboles": 1},
     },
 }
+
+# Compatibilidad con acciones guardadas por versiones anteriores de la demo.
+CATEGORIAS_ANTERIORES = {
+    "movilidad": {
+        "nombre": "Transporte sostenible",
+        "descripcion": "Usar bicicleta, caminar o transporte público",
+        "icono": "🚲",
+        **CATEGORIAS["transporte_sostenible"],
+    },
+    "consumo_local": {
+        "nombre": "Consumo local",
+        "descripcion": "Preferir productos locales",
+        "icono": "🥕",
+        "puntos": 10,
+        "ods": "ODS 12 - Producción y consumo responsables",
+        "impacto": {"co2": 1, "agua": 0, "energia": 0, "arboles": 0},
+    },
+}
+
+
+def get_categoria(clave):
+    """Obtiene metadatos de una categoría actual o heredada."""
+    return CATEGORIAS.get(clave) or CATEGORIAS_ANTERIORES.get(clave)
 
 
 def get_connection():
@@ -162,7 +196,7 @@ def get_estadisticas(usuario_id, periodo="mes"):
         total_acciones += cantidad
         total_puntos += fila["puntos"] or 0
 
-        impacto = CATEGORIAS.get(fila["categoria"], {}).get("impacto", {})
+        impacto = (get_categoria(fila["categoria"]) or {}).get("impacto", {})
         co2 += impacto.get("co2", 0) * cantidad
         agua += impacto.get("agua", 0) * cantidad
         energia += impacto.get("energia", 0) * cantidad

@@ -2,9 +2,11 @@
 
 Aplicación para registrar acciones sostenibles y motivar la participación mediante un ranking.
 
-Este módulo cubre dos historias de usuario:
+Este módulo cubre estas historias de usuario:
 
-- **HU03 — Registrar acción sostenible:** formulario con validación de campos obligatorios (tipo, fecha, descripción), asociado al usuario autenticado, con aviso de éxito/error.
+- **HU03 — Registrar acción sostenible:** formulario con validación de campos obligatorios (tipo, fecha, descripción), asociado al usuario autenticado, con aviso de éxito/error e historial.
+- **HU04 — Clasificar acción sostenible:** selector visual con reciclaje, ahorro de agua, ahorro de energía, transporte sostenible y reforestación.
+- **HU06 — Visualizar impacto:** resumen del aporte ambiental acumulado por el usuario.
 - **HU08 — Consultar ranking:** lista de participantes ordenada por puntos acumulados (mayor a menor), con pestañas *Global* / *Amigos* y resaltado del usuario actual.
 
 Cada acción registrada suma puntos al perfil, y esos puntos se reflejan en el ranking, conectando ambas historias.
@@ -25,6 +27,7 @@ EcoAccion/
 │   └── requirements.txt  # Dependencias de Python
 ├── frontend/
 │   ├── registrar.html    # Pantalla Registrar acción (HU03)
+│   ├── historial.html   # Historial personal de acciones (HU03)
 │   ├── ranking.html      # Pantalla Ranking (HU08)
 │   ├── css/estilos.css
 │   └── js/
@@ -59,6 +62,7 @@ Luego abre en el navegador: **http://127.0.0.1:5000**
 |--------|--------------------|----------------------------------------------------|
 | GET    | `/api/categorias`  | Tipos de acción disponibles y sus puntos.          |
 | POST   | `/api/acciones`    | Registra una acción. Valida campos obligatorios.   |
+| GET    | `/api/acciones`    | Historial del usuario con fecha, categoría y puntos.|
 | GET    | `/api/ranking`     | Ranking global ordenado por puntos (desc).         |
 | GET    | `/api/ranking?tipo=amigos` | Ranking solo de amigos + usuario actual.   |
 
