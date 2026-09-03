@@ -29,8 +29,8 @@ db.init_db()
 # ---------------------------------------------------------------------------
 @app.route("/")
 def home():
-    # Página de inicio -> formulario de registrar acción (HU03)
-    return send_from_directory(FRONTEND_DIR, "registrar.html")
+    # Página de inicio -> acceso demostrativo (sin base de datos)
+    return send_from_directory(FRONTEND_DIR, "login.html")
 
 
 @app.route("/<path:archivo>")
