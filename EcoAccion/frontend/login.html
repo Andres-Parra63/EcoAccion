@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoAccion — Iniciar sesión</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body class="pagina-login">
+  <main class="login-contenedor">
+    <section class="login-tarjeta" aria-labelledby="titulo-login">
+      <div class="marca-login" aria-hidden="true">🌱</div>
+      <p class="nombre-app">EcoAccion</p>
+      <h1 id="titulo-login">Bienvenido de nuevo</h1>
+      <p class="texto-login">Ingresa para seguir sumando acciones por el planeta.</p>
+
+      <div id="aviso-login" class="aviso-login" role="alert" aria-live="polite"></div>
+
+      <form id="form-login" novalidate>
+        <div class="campo" id="campo-correo">
+          <label for="correo">Correo electrónico</label>
+          <input
+            type="email"
+            id="correo"
+            name="correo"
+            placeholder="nombre@correo.com"
+            autocomplete="email"
+            required
+          />
+          <div class="error-campo" id="error-correo"></div>
+        </div>
+
+        <div class="campo" id="campo-contrasena">
+          <label for="contrasena">Contraseña</label>
+          <div class="campo-contrasena">
+            <input
+              type="password"
+              id="contrasena"
+              name="contrasena"
+              placeholder="Mínimo 4 caracteres"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" id="alternar-contrasena" class="ver-contrasena" aria-label="Mostrar contraseña">
+              Ver
+            </button>
+          </div>
+          <div class="error-campo" id="error-contrasena"></div>
+        </div>
+
+        <label class="recordarme">
+          <input type="checkbox" id="recordarme" />
+          <span>Recordarme en este equipo</span>
+        </label>
+
+        <button type="submit" class="boton-primario" id="btn-login">
+          Iniciar sesión
+        </button>
+      </form>
+
+      <p class="nota-demo">
+        Acceso de demostración: usa cualquier correo válido y una contraseña de 4 o más caracteres.
+      </p>
+    </section>
+  </main>
+
+  <script src="js/login.js"></script>
+</body>
+</html>
