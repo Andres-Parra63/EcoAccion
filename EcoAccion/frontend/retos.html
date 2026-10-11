@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoAccion — Retos</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div class="telefono">
+    <!-- HU09: Retos sostenibles -->
+    <header class="encabezado">
+      <h1>Retos sostenibles</h1>
+      <button type="button" class="cerrar-sesion" data-cerrar-sesion>Salir</button>
+    </header>
+
+    <div id="aviso-retos" class="aviso" role="status" aria-live="polite"></div>
+
+    <main class="contenido">
+      <p class="resumen-historial">Únete a los retos y gana puntos extra al completarlos.</p>
+      <ul class="lista-retos" id="lista-retos">
+        <li class="cargando">Cargando retos...</li>
+      </ul>
+    </main>
+
+    <nav class="nav-inferior">
+      <a href="registrar.html"><span class="icono">➕</span>Registrar</a>
+      <a href="historial.html"><span class="icono">📋</span>Historial</a>
+      <a href="retos.html" class="activo"><span class="icono">🎯</span>Retos</a>
+      <a href="ranking.html"><span class="icono">🏆</span>Ranking</a>
+      <a href="impacto.html"><span class="icono">📊</span>Impacto</a>
+      <a href="gestionar.html"><span class="icono">⚙️</span>Gestión</a>
+    </nav>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/retos.js"></script>
+</body>
+</html>

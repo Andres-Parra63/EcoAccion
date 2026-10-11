@@ -1,82 +1,72 @@
 # EcoAccion 🌱
 
-Aplicación para registrar acciones sostenibles y motivar la participación mediante un ranking.
+Aplicación para registrar acciones sostenibles, ganar puntos y motivar la
+participación mediante retos y un ranking.
 
-Este módulo cubre estas historias de usuario:
+## Prototipo (Parcial II)
 
-- **HU03 — Registrar acción sostenible:** formulario con validación de campos obligatorios (tipo, fecha, descripción), asociado al usuario autenticado, con aviso de éxito/error e historial.
-- **HU04 — Clasificar acción sostenible:** selector visual con reciclaje, ahorro de agua, ahorro de energía, transporte sostenible y reforestación.
-- **HU06 — Visualizar impacto:** resumen del aporte ambiental acumulado por el usuario.
-- **HU08 — Consultar ranking:** lista de participantes ordenada por puntos acumulados (mayor a menor), con pestañas *Global* / *Amigos* y resaltado del usuario actual.
+MVP **sin base de datos real**: todos los datos son datos quemados en memoria
+(se reinician al reiniciar el servidor), como pide el enunciado.
 
-Cada acción registrada suma puntos al perfil, y esos puntos se reflejan en el ranking, conectando ambas historias.
+### Historias de usuario implementadas
+
+| HU | Historia | Pantalla / API |
+|----|----------|----------------|
+| HU01 | Registro de usuario | `registro.html` · `POST /api/registro` |
+| HU02 | Inicio de sesión | `login.html` · `POST /api/login` |
+| HU03 | Registrar acción sostenible | `registrar.html` · `POST /api/acciones` |
+| HU04 | Clasificar acción | selector de categorías · `GET /api/categorias` |
+| HU05 | Recibir puntos | suma automática al registrar |
+| HU06 | Visualizar impacto ambiental | `impacto.html` · `GET /api/estadisticas` |
+| HU07 | Consultar historial | `historial.html` · `GET /api/acciones` |
+| HU08 | Consultar ranking | `ranking.html` · `GET /api/ranking` |
+| HU09 | Retos sostenibles | `retos.html` · `GET/POST /api/retos/...` |
+| HU10 | Gestionar acciones y retos | `gestionar.html` · `/api/gestion/...` |
+
+**Cambio del ciclo:** *Confirmación al registrar una acción sostenible*
+(HU03 + HU05). Al registrar, el sistema confirma el guardado, muestra los
+puntos obtenidos y el puntaje acumulado, y notifica si ocurre un error.
 
 ## Tecnologías
 
 - **Frontend:** HTML, CSS y JavaScript (sin frameworks).
-- **Backend:** Python + [Flask](https://flask.palletsprojects.com/).
-- **Base de datos:** SQLite (se crea sola al ejecutar).
+- **Backend:** Python. Dos formas de correrlo:
+  - `server.py` — solo librería estándar, **no requiere instalar nada**.
+  - `app.py` — con Flask (mismas rutas), para quien prefiera Flask.
+- **Datos:** en memoria (datos quemados), sin base de datos real.
+
+## Cómo ejecutar (recomendado, sin instalar nada)
+
+Desde **Git Bash**, dentro de la carpeta del proyecto:
+
+```bash
+cd backend
+python server.py
+```
+
+Abre **http://127.0.0.1:5000**. Para detenerlo: `Ctrl + C`.
+
+> Alternativa con Flask: `pip install -r backend/requirements.txt` y luego
+> `python backend/app.py`.
+
+## Cómo entrar
+
+- Cuenta de demostración: **demo@eco.com** / contraseña **1234**
+- O crea tu propia cuenta desde "Regístrate aquí" (HU01).
 
 ## Estructura
 
 ```
 EcoAccion/
 ├── backend/
-│   ├── app.py            # Servidor Flask + API (HU03 y HU08)
-│   ├── db.py             # Base de datos SQLite y datos de ejemplo
-│   └── requirements.txt  # Dependencias de Python
-├── frontend/
-│   ├── registrar.html    # Pantalla Registrar acción (HU03)
-│   ├── historial.html   # Historial personal de acciones (HU03)
-│   ├── ranking.html      # Pantalla Ranking (HU08)
-│   ├── css/estilos.css
-│   └── js/
-│       ├── registrar.js
-│       └── ranking.js
-└── README.md
+│   ├── server.py         # Servidor sin dependencias (recomendado)
+│   ├── app.py            # Servidor con Flask (mismas rutas)
+│   ├── db.py             # Datos quemados + lógica de negocio
+│   └── requirements.txt
+└── frontend/
+    ├── login.html · registro.html
+    ├── registrar.html · historial.html · retos.html
+    ├── ranking.html · impacto.html · gestionar.html
+    ├── css/estilos.css
+    └── js/ (auth, login, registro, registrar, historial, retos, ranking, impacto, gestionar)
 ```
-
-## Cómo ejecutar
-
-Desde **Git Bash** (o cualquier terminal), en la carpeta del proyecto:
-
-```bash
-# 1. Instalar dependencias
-pip install -r backend/requirements.txt
-
-# 2. Levantar el servidor
-cd backend
-python app.py
-```
-
-Luego abre en el navegador: **http://127.0.0.1:5000**
-
-- `/` → Registrar acción (HU03)
-- `/ranking.html` → Ranking (HU08)
-
-> La primera vez se crea el archivo `backend/ecoaccion.db` con 5 usuarios de ejemplo (los del mockup). No se sube al repositorio (está en `.gitignore`).
-
-## API
-
-| Método | Ruta               | Descripción                                        |
-|--------|--------------------|----------------------------------------------------|
-| GET    | `/api/categorias`  | Tipos de acción disponibles y sus puntos.          |
-| POST   | `/api/acciones`    | Registra una acción. Valida campos obligatorios.   |
-| GET    | `/api/acciones`    | Historial del usuario con fecha, categoría y puntos.|
-| GET    | `/api/ranking`     | Ranking global ordenado por puntos (desc).         |
-| GET    | `/api/ranking?tipo=amigos` | Ranking solo de amigos + usuario actual.   |
-
-### Ejemplo — registrar acción
-
-```bash
-curl -X POST http://127.0.0.1:5000/api/acciones \
-  -H "Content-Type: application/json" \
-  -d '{"categoria":"reciclaje","fecha":"2026-08-27","descripcion":"Separé residuos"}'
-```
-
-## Nota sobre autenticación
-
-Para esta entrega, el "usuario autenticado" se simula con la fila marcada como
-`es_actual = 1` en la tabla `usuarios` (el usuario **"Tú"**). Cuando el equipo
-integre el login real, basta con reemplazar `db.get_usuario_actual()` por el
-usuario de la sesión.

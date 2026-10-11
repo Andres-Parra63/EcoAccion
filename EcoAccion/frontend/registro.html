@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoAccion — Crear cuenta</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body class="pagina-login">
+  <main class="login-contenedor">
+    <section class="login-tarjeta" aria-labelledby="titulo-registro">
+      <div class="marca-login" aria-hidden="true">🌱</div>
+      <p class="nombre-app">EcoAccion</p>
+      <h1 id="titulo-registro">Crear cuenta</h1>
+      <p class="texto-login">Regístrate para empezar a sumar acciones por el planeta.</p>
+
+      <div id="aviso-registro" class="aviso-login" role="alert" aria-live="polite"></div>
+
+      <form id="form-registro" novalidate>
+        <div class="campo" id="campo-nombre">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" autocomplete="name" required />
+          <div class="error-campo" id="error-nombre"></div>
+        </div>
+
+        <div class="campo" id="campo-correo">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo" placeholder="nombre@correo.com" autocomplete="email" required />
+          <div class="error-campo" id="error-correo"></div>
+        </div>
+
+        <div class="campo" id="campo-password">
+          <label for="password">Contraseña</label>
+          <div class="campo-contrasena">
+            <input type="password" id="password" name="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required />
+            <button type="button" id="alternar-password" class="ver-contrasena" aria-label="Mostrar contraseña">Ver</button>
+          </div>
+          <div class="error-campo" id="error-password"></div>
+        </div>
+
+        <button type="submit" class="boton-primario" id="btn-registro">Crear cuenta</button>
+      </form>
+
+      <p class="enlace-registro">
+        ¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="js/registro.js"></script>
+</body>
+</html>
