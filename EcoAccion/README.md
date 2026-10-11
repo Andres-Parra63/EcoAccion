@@ -27,6 +27,16 @@ internet para funcionar, lo que cumple el requisito del enunciado.
 **Cambio del ciclo:** *Confirmación al registrar una acción sostenible* (HU03 + HU05):
 al registrar, confirma el guardado, muestra los puntos ganados y el puntaje acumulado.
 
+### Mejoras de este ciclo (un commit por historia)
+
+| Commit | Historia | Qué se hizo |
+|--------|----------|-------------|
+| `feat(HU01)` | Registro de usuario | Campo "Confirmar contraseña" con validación. |
+| `feat(HU05)` | Recibir puntos | Una misma acción (categoría, fecha y descripción) no otorga puntos dos veces. |
+| `feat(HU08)` | Consultar ranking | Mensaje claro cuando nadie ha sumado puntos; solo entran usuarios con puntos. |
+| `feat(HU09)` | Retos sostenibles | Fecha límite por reto; solo se muestran retos vigentes; no se puede unir ni completar un reto vencido. |
+| `feat(HU10)` | Gestionar acciones y retos | Activar/desactivar retos sin borrarlos y fecha límite al crear un reto. |
+
 ## Cómo funciona (arquitectura)
 
 - **Frontend:** HTML, CSS y JavaScript. Es una **PWA** (se instala en el cel con ícono).
