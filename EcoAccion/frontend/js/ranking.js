@@ -23,8 +23,14 @@ async function cargarRanking(tipo = "global") {
     const res = await fetch(`/api/ranking?tipo=${encodeURIComponent(tipo)}`);
     const data = await res.json();
 
-    if (!data.ok || data.ranking.length === 0) {
-      lista.innerHTML = '<li class="cargando">Aún no hay participantes.</li>';
+    if (!data.ok) throw new Error();
+    if (data.ranking.length === 0) {
+      // HU08: caso sin usuarios con puntos
+      lista.innerHTML = "";
+      const vacio = document.createElement("li");
+      vacio.className = "cargando";
+      vacio.textContent = data.mensaje || "Nadie ha sumado puntos todavía.";
+      lista.appendChild(vacio);
       return;
     }
 

@@ -346,6 +346,8 @@ def obtener_ranking(tipo="global"):
     else:
         candidatos = list(USUARIOS)
 
+    # HU08: solo entran al ranking quienes ya sumaron puntos.
+    candidatos = [u for u in candidatos if u["puntos"] > 0]
     ordenados = sorted(candidatos, key=lambda u: (-u["puntos"], u["nombre"]))
     ranking = []
     for i, u in enumerate(ordenados, start=1):
@@ -353,7 +355,11 @@ def obtener_ranking(tipo="global"):
             "posicion": i, "id": u["id"], "nombre": u["nombre"],
             "puntos": u["puntos"], "es_actual": u["id"] == actual_id,
         })
-    return {"tipo": tipo, "ranking": ranking}
+    mensaje = None
+    if not ranking:
+        mensaje = ("Ni tú ni tus amigos han sumado puntos todavía." if tipo == "amigos"
+                   else "Nadie ha sumado puntos todavía. Registra tu primera acción para abrir el ranking.")
+    return {"tipo": tipo, "ranking": ranking, "mensaje": mensaje}
 
 
 # ---------------------------------------------------------------------------

@@ -156,9 +156,12 @@
     const u = usuarioActual(d);
     const aid = u ? u.id : null;
     let cand = tipo === "amigos" ? d.usuarios.filter((x) => x.es_amigo === 1 || x.id === aid) : d.usuarios.slice();
+    // HU08: solo entran al ranking quienes ya sumaron puntos.
+    cand = cand.filter((x) => x.puntos > 0);
     cand.sort((a, b) => b.puntos - a.puntos || a.nombre.localeCompare(b.nombre));
     const ranking = cand.map((x, i) => ({ posicion: i + 1, id: x.id, nombre: x.nombre, puntos: x.puntos, es_actual: x.id === aid }));
-    return ok({ tipo: tipo, ranking: ranking });
+    const mensaje = ranking.length ? null : (tipo === "amigos" ? "Ni tú ni tus amigos han sumado puntos todavía." : "Nadie ha sumado puntos todavía. Registra tu primera acción para abrir el ranking.");
+    return ok({ tipo: tipo, ranking: ranking, mensaje: mensaje });
   }
 
   function obtenerEstadisticas(d, periodo) {
