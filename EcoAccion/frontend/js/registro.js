@@ -6,6 +6,7 @@ const formRegistro = document.getElementById("form-registro");
 const nombre = document.getElementById("nombre");
 const correo = document.getElementById("correo");
 const password = document.getElementById("password");
+const confirmar = document.getElementById("confirmar");
 const avisoRegistro = document.getElementById("aviso-registro");
 const botonRegistro = document.getElementById("btn-registro");
 const botonVer = document.getElementById("alternar-password");
@@ -16,7 +17,7 @@ function mostrarError(campo, mensaje) {
 }
 
 function limpiarErrores() {
-  ["nombre", "correo", "password"].forEach((campo) => {
+  ["nombre", "correo", "password", "confirmar"].forEach((campo) => {
     document.getElementById(`campo-${campo}`).classList.remove("invalido");
     document.getElementById(`error-${campo}`).textContent = "";
   });
@@ -51,6 +52,10 @@ formRegistro.addEventListener("submit", async (evento) => {
   }
   if (password.value.length < 4) {
     mostrarError("password", "La contraseña debe tener al menos 4 caracteres.");
+    valido = false;
+  }
+  if (confirmar.value !== password.value) {
+    mostrarError("confirmar", "Las contraseñas no coinciden.");
     valido = false;
   }
   if (!valido) {
