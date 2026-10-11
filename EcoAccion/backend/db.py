@@ -271,6 +271,18 @@ def registrar_accion(datos):
     if usuario is None:
         raise ErrorValidacion(mensaje="No hay un usuario autenticado.", codigo=401)
 
+    # HU05: una misma acción (categoría, fecha y descripción) no otorga puntos dos veces.
+    repetida = any(
+        a["usuario_id"] == usuario["id"] and a["categoria"] == categoria
+        and a["fecha"] == fecha and a["descripcion"].lower() == descripcion.lower()
+        for a in ACCIONES
+    )
+    if repetida:
+        raise ErrorValidacion(
+            mensaje="Esta acción ya fue registrada con la misma fecha y descripción. No se otorgan puntos duplicados.",
+            codigo=409,
+        )
+
     puntos = CATEGORIAS[categoria]["puntos"]
     ods = CATEGORIAS[categoria]["ods"]
 

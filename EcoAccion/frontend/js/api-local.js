@@ -121,6 +121,9 @@
 
     const u = usuarioActual(d);
     if (!u) return err(401, { mensaje: "No hay un usuario autenticado." });
+    // HU05: una misma acción (misma categoría, fecha y descripción) no otorga puntos dos veces.
+    const repetida = d.acciones.some((a) => a.usuario_id === u.id && a.categoria === categoria && a.fecha === fecha && a.descripcion.toLowerCase() === descripcion.toLowerCase());
+    if (repetida) return err(409, { mensaje: "Esta acción ya fue registrada con la misma fecha y descripción. No se otorgan puntos duplicados." });
     const info = CATEGORIAS[categoria];
     const accion = { id: nuevoId(d, "accion"), usuario_id: u.id, categoria: categoria, fecha: fecha, descripcion: descripcion, puntos: info.puntos, ods: info.ods, creada_en: new Date().toISOString() };
     d.acciones.push(accion);
