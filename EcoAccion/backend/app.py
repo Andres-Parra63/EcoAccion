@@ -1,283 +1,157 @@
 """
-app.py — Backend de EcoAccion (Flask).
+app.py — Backend de EcoAccion con Flask.
 
-Expone la API REST para las historias de usuario:
-  - HU03: registrar una acción sostenible  ->  POST /api/acciones
-  - HU04: clasificar la acción             ->  GET  /api/categorias
-  - HU08: consultar el ranking             ->  GET  /api/ranking
+Mismas funcionalidades que server.py pero usando Flask. Toda la lógica vive
+en db.py (datos quemados, en memoria), así que estas rutas solo enrutan.
 
-Además sirve el frontend estático (carpeta ../frontend) para que todo
-el proyecto se ejecute con un solo comando:  python app.py
+    pip install -r requirements.txt
+    python app.py        ->   http://127.0.0.1:5000
+
+Si no puedes instalar Flask, usa server.py (no requiere instalar nada).
+
+Historias: HU01 registro, HU02 login, HU03 registrar, HU04 categorías,
+HU05 puntos, HU06 impacto, HU07 historial, HU08 ranking, HU09 retos,
+HU10 gestionar. Cambio del ciclo: confirmación al registrar.
 """
 import os
-from datetime import datetime
 
 from flask import Flask, jsonify, request, send_from_directory
 
 import db
 
-# Ruta absoluta a la carpeta del frontend (../frontend respecto a este archivo)
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
 app = Flask(__name__, static_folder=None)
-
-# Inicializa la base de datos al arrancar (crea tablas + siembra si hace falta).
 db.init_db()
 
 
+def responder(funcion, codigo_ok=200):
+    """Ejecuta una función de db.py y arma la respuesta/errores en JSON."""
+    try:
+        resultado = funcion()
+        payload = {"ok": True}
+        if isinstance(resultado, dict):
+            payload.update(resultado)
+        return jsonify(payload), codigo_ok
+    except db.ErrorValidacion as e:
+        cuerpo = {"ok": False}
+        if e.errores:
+            cuerpo["errores"] = e.errores
+        if e.mensaje:
+            cuerpo["mensaje"] = e.mensaje
+        return jsonify(cuerpo), e.codigo
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"ok": False, "mensaje": "Error interno.", "detalle": str(exc)}), 500
+
+
 # ---------------------------------------------------------------------------
-#  Rutas que sirven el frontend
+#  Frontend estático
 # ---------------------------------------------------------------------------
 @app.route("/")
 def home():
-    # Página de inicio -> acceso demostrativo (sin base de datos)
     return send_from_directory(FRONTEND_DIR, "login.html")
 
 
 @app.route("/<path:archivo>")
 def estaticos(archivo):
-    # Sirve cualquier otro archivo del frontend (html, css, js)
     return send_from_directory(FRONTEND_DIR, archivo)
 
 
 # ---------------------------------------------------------------------------
-#  HU03 — Registrar acción sostenible
+#  Usuarios (HU01 registro, HU02 login)
+# ---------------------------------------------------------------------------
+@app.route("/api/registro", methods=["POST"])
+def registro():
+    return responder(lambda: db.crear_usuario(request.get_json(silent=True) or {}), 201)
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    return responder(lambda: db.autenticar(request.get_json(silent=True) or {}))
+
+
+# ---------------------------------------------------------------------------
+#  Acciones (HU03 registrar + confirmación, HU07 historial)
 # ---------------------------------------------------------------------------
 @app.route("/api/acciones", methods=["POST"])
 def registrar_accion():
-    """
-    Registra una acción sostenible del usuario autenticado.
-
-    Criterios de aceptación (Trello HU03):
-      - Valida que categoría, descripción y fecha estén completos.
-      - La acción queda asociada al perfil del usuario autenticado.
-      - Responde con error claro si el registro falla.
-    """
-    datos = request.get_json(silent=True) or {}
-
-    categoria = (datos.get("categoria") or "").strip()
-    fecha = (datos.get("fecha") or "").strip()
-    descripcion = (datos.get("descripcion") or "").strip()
-
-    # --- Validación de campos obligatorios ---
-    errores = {}
-    if not categoria:
-        errores["categoria"] = "Selecciona un tipo de acción."
-    elif categoria not in db.CATEGORIAS:
-        errores["categoria"] = "El tipo de acción no es válido."
-
-    if not fecha:
-        errores["fecha"] = "La fecha es obligatoria."
-    else:
-        # Verifica que la fecha tenga formato YYYY-MM-DD válido
-        try:
-            datetime.strptime(fecha, "%Y-%m-%d")
-        except ValueError:
-            errores["fecha"] = "La fecha no tiene un formato válido."
-
-    if not descripcion:
-        errores["descripcion"] = "La descripción es obligatoria."
-    elif len(descripcion) > 200:
-        errores["descripcion"] = "La descripción no puede superar los 200 caracteres."
-
-    if errores:
-        # 422 = entidad no procesable (fallo de validación)
-        return jsonify({"ok": False, "errores": errores}), 422
-
-    # --- Asociación al usuario autenticado ---
-    usuario = db.get_usuario_actual()
-    if usuario is None:
-        return jsonify({"ok": False, "mensaje": "No hay un usuario autenticado."}), 401
-
-    puntos = db.CATEGORIAS[categoria]["puntos"]
-    ods = db.CATEGORIAS[categoria]["ods"]
-
-    # --- Persistencia con manejo de errores ---
-    conn = None
-    try:
-        conn = db.get_connection()
-        cur = conn.cursor()
-        cur.execute(
-            """
-            INSERT INTO acciones (usuario_id, categoria, fecha, descripcion, puntos, ods)
-            VALUES (?, ?, ?, ?, ?, ?);
-            """,
-            (usuario["id"], categoria, fecha, descripcion, puntos, ods),
-        )
-        accion_id = cur.lastrowid
-        # Cada acción suma puntos al perfil -> alimenta el ranking (HU08)
-        cur.execute(
-            "UPDATE usuarios SET puntos = puntos + ? WHERE id = ?;",
-            (puntos, usuario["id"]),
-        )
-        conn.commit()
-    except Exception as exc:  # noqa: BLE001 - queremos notificar cualquier fallo
-        if conn is not None:
-            conn.rollback()
-        # Notifica al usuario si el registro falla (criterio de aceptación)
-        return jsonify({
-            "ok": False,
-            "mensaje": "No se pudo guardar la acción. Inténtalo de nuevo.",
-            "detalle": str(exc),
-        }), 500
-    finally:
-        if conn is not None:
-            conn.close()
-
-    return jsonify({
-        "ok": True,
-        "mensaje": f"¡Acción registrada! Ganaste {puntos} puntos.",
-        "accion": {
-            "id": accion_id,
-            "categoria": categoria,
-            "fecha": fecha,
-            "descripcion": descripcion,
-            "puntos": puntos,
-            "ods": ods,
-            "usuario": usuario["nombre"],
-        },
-    }), 201
+    return responder(lambda: db.registrar_accion(request.get_json(silent=True) or {}), 201)
 
 
 @app.route("/api/acciones", methods=["GET"])
 def listar_acciones():
-    """Devuelve el historial del usuario autenticado, de más reciente a más antiguo."""
-    usuario = db.get_usuario_actual()
-    if usuario is None:
-        return jsonify({"ok": False, "mensaje": "No hay un usuario autenticado."}), 401
-
-    conn = db.get_connection()
-    filas = conn.execute(
-        """
-        SELECT id, categoria, fecha, descripcion, puntos, ods
-        FROM acciones
-        WHERE usuario_id = ?
-        ORDER BY fecha DESC, creada_en DESC, id DESC;
-        """,
-        (usuario["id"],),
-    ).fetchall()
-    conn.close()
-
-    acciones = []
-    for fila in filas:
-        categoria = db.get_categoria(fila["categoria"]) or {}
-        acciones.append({
-            "id": fila["id"],
-            "categoria": fila["categoria"],
-            "categoria_nombre": categoria.get("nombre", fila["categoria"]),
-            "categoria_icono": categoria.get("icono", "🌱"),
-            "fecha": fila["fecha"],
-            "descripcion": fila["descripcion"],
-            "puntos": fila["puntos"],
-            "ods": fila["ods"],
-        })
-
-    return jsonify({
-        "ok": True,
-        "usuario": usuario["nombre"],
-        "acciones": acciones,
-    })
-
-
-@app.route("/api/categorias", methods=["GET"])
-def listar_categorias():
-    """Devuelve las categorías disponibles para clasificar una acción (HU04)."""
-    categorias = [
-        {
-            "valor": clave,
-            "nombre": info["nombre"],
-            "descripcion": info["descripcion"],
-            "icono": info["icono"],
-            "puntos": info["puntos"],
-            "ods": info["ods"],
-        }
-        for clave, info in db.CATEGORIAS.items()
-    ]
-    return jsonify({"ok": True, "categorias": categorias})
+    return responder(db.listar_acciones)
 
 
 # ---------------------------------------------------------------------------
-#  HU08 — Consultar ranking
+#  HU04 categorías
+# ---------------------------------------------------------------------------
+@app.route("/api/categorias", methods=["GET"])
+def categorias():
+    return responder(lambda: {"categorias": db.listar_categorias()})
+
+
+# ---------------------------------------------------------------------------
+#  HU08 ranking
 # ---------------------------------------------------------------------------
 @app.route("/api/ranking", methods=["GET"])
-def obtener_ranking():
-    """
-    Devuelve los usuarios ordenados por puntos acumulados (mayor a menor).
-
-    Criterios de aceptación (Trello HU08):
-      - Obtiene y ordena a los usuarios por puntos (desc).
-    Parámetro opcional ?tipo=amigos para filtrar solo amigos + el usuario actual.
-    """
-    tipo = (request.args.get("tipo") or "global").lower()
-
-    conn = db.get_connection()
-    if tipo == "amigos":
-        # Muestra a los amigos y también al usuario actual, para poder compararse
-        filas = conn.execute(
-            """
-            SELECT id, nombre, puntos, es_actual
-            FROM usuarios
-            WHERE es_amigo = 1 OR es_actual = 1
-            ORDER BY puntos DESC, nombre ASC;
-            """
-        ).fetchall()
-    else:
-        filas = conn.execute(
-            """
-            SELECT id, nombre, puntos, es_actual
-            FROM usuarios
-            ORDER BY puntos DESC, nombre ASC;
-            """
-        ).fetchall()
-    conn.close()
-
-    ranking = []
-    for posicion, fila in enumerate(filas, start=1):
-        ranking.append({
-            "posicion": posicion,
-            "id": fila["id"],
-            "nombre": fila["nombre"],
-            "puntos": fila["puntos"],
-            "es_actual": bool(fila["es_actual"]),
-        })
-
-    return jsonify({"ok": True, "tipo": tipo, "ranking": ranking})
+def ranking():
+    return responder(lambda: db.obtener_ranking(request.args.get("tipo", "global")))
 
 
 # ---------------------------------------------------------------------------
-#  HU06 — Visualizar impacto ambiental
+#  HU06 estadísticas / impacto
 # ---------------------------------------------------------------------------
 @app.route("/api/estadisticas", methods=["GET"])
-def obtener_estadisticas():
-    """
-    Devuelve el resumen de impacto ambiental del usuario autenticado.
+def estadisticas():
+    return responder(lambda: db.obtener_estadisticas(request.args.get("periodo", "mes")))
 
-    Criterios de aceptación (Trello HU06):
-      - Muestra información resumida de acciones, puntos e impacto.
-      - Se recalcula siempre (no se cachea) para reflejar acciones nuevas.
-      - Si el usuario no tiene acciones, total_acciones queda en 0 para que
-        el frontend muestre un estado vacío en vez de datos engañosos.
-    Parámetro opcional ?periodo=todo para ver el historial completo
-    (por defecto solo se cuenta el mes actual, como en el mockup).
-    """
-    periodo = (request.args.get("periodo") or "mes").lower()
-    if periodo not in ("mes", "todo"):
-        periodo = "mes"
 
-    usuario = db.get_usuario_actual()
-    if usuario is None:
-        return jsonify({"ok": False, "mensaje": "No hay un usuario autenticado."}), 401
+# ---------------------------------------------------------------------------
+#  HU09 retos
+# ---------------------------------------------------------------------------
+@app.route("/api/retos", methods=["GET"])
+def retos():
+    return responder(db.listar_retos)
 
-    estadisticas = db.get_estadisticas(usuario["id"], periodo)
 
-    return jsonify({
-        "ok": True,
-        "periodo": periodo,
-        "usuario": usuario["nombre"],
-        **estadisticas,
-    })
+@app.route("/api/retos/<int:reto_id>/unirse", methods=["POST"])
+def unirse_reto(reto_id):
+    return responder(lambda: db.unirse_reto(reto_id))
+
+
+@app.route("/api/retos/<int:reto_id>/completar", methods=["POST"])
+def completar_reto(reto_id):
+    return responder(lambda: db.completar_reto(reto_id))
+
+
+# ---------------------------------------------------------------------------
+#  HU10 gestionar acciones y retos
+# ---------------------------------------------------------------------------
+@app.route("/api/gestion/acciones", methods=["GET"])
+def gestion_acciones():
+    return responder(db.gestion_listar_acciones)
+
+
+@app.route("/api/gestion/acciones/<int:accion_id>/eliminar", methods=["POST"])
+def gestion_eliminar_accion(accion_id):
+    return responder(lambda: db.gestion_eliminar_accion(accion_id))
+
+
+@app.route("/api/gestion/retos", methods=["GET"])
+def gestion_retos():
+    return responder(db.gestion_listar_retos)
+
+
+@app.route("/api/gestion/retos", methods=["POST"])
+def gestion_crear_reto():
+    return responder(lambda: db.gestion_crear_reto(request.get_json(silent=True) or {}), 201)
+
+
+@app.route("/api/gestion/retos/<int:reto_id>/eliminar", methods=["POST"])
+def gestion_eliminar_reto(reto_id):
+    return responder(lambda: db.gestion_eliminar_reto(reto_id))
 
 
 if __name__ == "__main__":
-    # debug=True recarga el servidor al guardar cambios (útil mientras desarrollas)
     app.run(host="127.0.0.1", port=5000, debug=True)

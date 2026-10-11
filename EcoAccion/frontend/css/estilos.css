@@ -646,3 +646,123 @@ body {
     box-shadow: none;
   }
 }
+
+/* -------------------------------------------------------------------------
+   Registro / enlaces de autenticación (HU01)
+   ------------------------------------------------------------------------- */
+.enlace-registro {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gris-suave);
+}
+.enlace-registro a { color: var(--verde); font-weight: 600; text-decoration: none; }
+.enlace-registro a:hover { text-decoration: underline; }
+
+/* Botones auxiliares */
+.boton-secundario {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--verde);
+  background: #e6f4ec;
+  border: 0;
+  border-radius: var(--radio);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.boton-secundario:hover { background: #d7ecdf; }
+.boton-mini { padding: 10px 14px; font-size: 14px; width: auto; }
+
+/* -------------------------------------------------------------------------
+   Retos sostenibles (HU09)
+   ------------------------------------------------------------------------- */
+.lista-retos { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.reto {
+  display: flex;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+}
+.reto-completado { background: #f1f9f4; border-color: rgba(46, 125, 91, 0.35); }
+
+.icono-reto {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  font-size: 24px;
+  background: #e6f4ec;
+  border-radius: 12px;
+}
+
+.cuerpo-reto { flex: 1; min-width: 0; }
+.cuerpo-reto h2 { margin: 0 0 4px; font-size: 15px; }
+.cuerpo-reto p { margin: 0 0 10px; font-size: 13px; line-height: 1.4; color: var(--gris-suave); }
+
+.premio-reto {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--verde-osc);
+  background: #e6f4ec;
+  border-radius: 999px;
+}
+
+.acciones-reto { display: block; }
+.estado-reto { font-size: 14px; font-weight: 600; color: var(--verde); }
+
+/* -------------------------------------------------------------------------
+   Gestión (HU10)
+   ------------------------------------------------------------------------- */
+.lista-gestion { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+.fila-gestion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--blanco);
+}
+
+.icono-gestion {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  font-size: 20px;
+  background: #e6f4ec;
+  border-radius: 10px;
+}
+
+.texto-gestion { flex: 1; min-width: 0; }
+.texto-gestion strong { display: block; font-size: 14px; }
+.texto-gestion small { display: block; margin: 2px 0; font-size: 12px; color: var(--gris-suave); }
+.texto-gestion p { margin: 4px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+
+.boton-eliminar {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--error);
+  background: #fbeaea;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.boton-eliminar:hover { background: #f6dada; }
+
+.form-reto { margin-bottom: 8px; }
+.fila-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

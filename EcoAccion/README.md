@@ -1,82 +1,75 @@
 # EcoAccion 🌱
 
-Aplicación para registrar acciones sostenibles y motivar la participación mediante un ranking.
+App para registrar acciones sostenibles, ganar puntos y competir en un ranking.
+Funciona como **app instalable en el celular y 100% offline** (sin internet).
 
-Este módulo cubre estas historias de usuario:
+## Prototipo (Parcial II)
 
-- **HU03 — Registrar acción sostenible:** formulario con validación de campos obligatorios (tipo, fecha, descripción), asociado al usuario autenticado, con aviso de éxito/error e historial.
-- **HU04 — Clasificar acción sostenible:** selector visual con reciclaje, ahorro de agua, ahorro de energía, transporte sostenible y reforestación.
-- **HU06 — Visualizar impacto:** resumen del aporte ambiental acumulado por el usuario.
-- **HU08 — Consultar ranking:** lista de participantes ordenada por puntos acumulados (mayor a menor), con pestañas *Global* / *Amigos* y resaltado del usuario actual.
+MVP **sin base de datos real**: los datos son **datos quemados** que viven en el
+propio navegador (JavaScript + almacenamiento local). No necesita servidor ni
+internet para funcionar, lo que cumple el requisito del enunciado.
 
-Cada acción registrada suma puntos al perfil, y esos puntos se reflejan en el ranking, conectando ambas historias.
+### Historias de usuario
 
-## Tecnologías
+| HU | Historia |
+|----|----------|
+| HU01 | Registro de usuario |
+| HU02 | Inicio de sesión |
+| HU03 | Registrar acción sostenible |
+| HU04 | Clasificar acción |
+| HU05 | Recibir puntos |
+| HU06 | Visualizar impacto ambiental |
+| HU07 | Consultar historial |
+| HU08 | Consultar ranking |
+| HU09 | Retos sostenibles |
+| HU10 | Gestionar acciones y retos |
 
-- **Frontend:** HTML, CSS y JavaScript (sin frameworks).
-- **Backend:** Python + [Flask](https://flask.palletsprojects.com/).
-- **Base de datos:** SQLite (se crea sola al ejecutar).
+**Cambio del ciclo:** *Confirmación al registrar una acción sostenible* (HU03 + HU05):
+al registrar, confirma el guardado, muestra los puntos ganados y el puntaje acumulado.
+
+## Cómo funciona (arquitectura)
+
+- **Frontend:** HTML, CSS y JavaScript. Es una **PWA** (se instala en el cel con ícono).
+- **Lógica y datos:** `frontend/js/api-local.js` responde todas las operaciones en
+  el navegador con datos quemados (guardados en `localStorage`). Por eso corre offline.
+- **Backend Python (opcional):** `backend/` tiene un servidor equivalente (`server.py`
+  sin dependencias, o `app.py` con Flask). No es necesario para la app, queda como
+  versión de servidor de referencia.
+
+## Verla en el computador
+
+Opción simple (no requiere instalar nada): abre `frontend/login.html`… o mejor,
+levanta un servidor estático para que la PWA funcione bien:
+
+```bash
+cd frontend
+python -m http.server 8080
+```
+
+Abre **http://127.0.0.1:8080/login.html**. Entra con **demo@eco.com / 1234** o crea tu cuenta.
+
+## Usarla en el celular (offline, para la U)
+
+1. Sube la carpeta `frontend/` a un hosting estático gratis con HTTPS
+   (por ejemplo **Netlify Drop**: https://app.netlify.com/drop, arrastras la carpeta
+   y te da una URL). También sirve un "Static Site" de Render o GitHub Pages.
+2. En el celular, **con internet** (en tu casa), abre esa URL. Deja que cargue.
+3. Menú del navegador → **"Agregar a pantalla de inicio"**. Queda el ícono de la app.
+4. En la U, **sin internet**: abres la app desde el ícono y funciona normal.
+   Los datos se guardan en el teléfono.
+
+> Para reiniciar la demo a su estado inicial: en la consola del navegador escribe
+> `ecoReset()`, o borra los datos del sitio.
 
 ## Estructura
 
 ```
 EcoAccion/
-├── backend/
-│   ├── app.py            # Servidor Flask + API (HU03 y HU08)
-│   ├── db.py             # Base de datos SQLite y datos de ejemplo
-│   └── requirements.txt  # Dependencias de Python
-├── frontend/
-│   ├── registrar.html    # Pantalla Registrar acción (HU03)
-│   ├── historial.html   # Historial personal de acciones (HU03)
-│   ├── ranking.html      # Pantalla Ranking (HU08)
-│   ├── css/estilos.css
-│   └── js/
-│       ├── registrar.js
-│       └── ranking.js
-└── README.md
+├── backend/   (servidor Python opcional: server.py, app.py, db.py)
+└── frontend/
+    ├── index.html, login.html, registro.html, registrar.html, historial.html,
+    │   retos.html, ranking.html, impacto.html, gestionar.html
+    ├── manifest.json, sw.js, icon-192.png, icon-512.png   (PWA)
+    ├── css/estilos.css
+    └── js/  (api-local.js = backend en el navegador, + lógica de cada pantalla)
 ```
-
-## Cómo ejecutar
-
-Desde **Git Bash** (o cualquier terminal), en la carpeta del proyecto:
-
-```bash
-# 1. Instalar dependencias
-pip install -r backend/requirements.txt
-
-# 2. Levantar el servidor
-cd backend
-python app.py
-```
-
-Luego abre en el navegador: **http://127.0.0.1:5000**
-
-- `/` → Registrar acción (HU03)
-- `/ranking.html` → Ranking (HU08)
-
-> La primera vez se crea el archivo `backend/ecoaccion.db` con 5 usuarios de ejemplo (los del mockup). No se sube al repositorio (está en `.gitignore`).
-
-## API
-
-| Método | Ruta               | Descripción                                        |
-|--------|--------------------|----------------------------------------------------|
-| GET    | `/api/categorias`  | Tipos de acción disponibles y sus puntos.          |
-| POST   | `/api/acciones`    | Registra una acción. Valida campos obligatorios.   |
-| GET    | `/api/acciones`    | Historial del usuario con fecha, categoría y puntos.|
-| GET    | `/api/ranking`     | Ranking global ordenado por puntos (desc).         |
-| GET    | `/api/ranking?tipo=amigos` | Ranking solo de amigos + usuario actual.   |
-
-### Ejemplo — registrar acción
-
-```bash
-curl -X POST http://127.0.0.1:5000/api/acciones \
-  -H "Content-Type: application/json" \
-  -d '{"categoria":"reciclaje","fecha":"2026-08-27","descripcion":"Separé residuos"}'
-```
-
-## Nota sobre autenticación
-
-Para esta entrega, el "usuario autenticado" se simula con la fila marcada como
-`es_actual = 1` en la tabla `usuarios` (el usuario **"Tú"**). Cuando el equipo
-integre el login real, basta con reemplazar `db.get_usuario_actual()` por el
-usuario de la sesión.

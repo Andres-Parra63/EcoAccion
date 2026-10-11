@@ -180,7 +180,11 @@ form.addEventListener("submit", async (evento) => {
     const data = await res.json();
 
     if (res.ok && data.ok) {
-      mostrarAviso(data.mensaje, true);
+      // Cambio del ciclo: confirmación clara con puntos y puntaje acumulado.
+      const detalle = data.puntaje_acumulado != null
+        ? ` Tu puntaje acumulado es ${data.puntaje_acumulado} pts.`
+        : "";
+      mostrarAviso(data.mensaje + detalle, true);
       form.reset();
       textoCategoria.textContent = "Seleccionar tipo";
       btnAbrirCategorias.classList.remove("con-seleccion");

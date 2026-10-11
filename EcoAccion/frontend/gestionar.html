@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2e7d5b" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EcoAccion" />
+  <title>EcoAccion — Gestión</title>
+  <link rel="stylesheet" href="css/estilos.css" />
+</head>
+<body>
+  <div class="telefono">
+    <!-- HU10: Gestionar acciones y retos -->
+    <header class="encabezado">
+      <h1>Gestión</h1>
+      <button type="button" class="cerrar-sesion" data-cerrar-sesion>Salir</button>
+    </header>
+
+    <div id="aviso-gestion" class="aviso" role="status" aria-live="polite"></div>
+
+    <main class="contenido">
+      <!-- Pestañas: acciones / retos -->
+      <div class="pestanas">
+        <button data-panel="acciones" class="activa">Acciones</button>
+        <button data-panel="retos">Retos</button>
+      </div>
+
+      <!-- Panel acciones -->
+      <section id="panel-acciones">
+        <p class="resumen-historial">Acciones registradas en el sistema. Puedes eliminarlas.</p>
+        <ul class="lista-gestion" id="lista-acciones">
+          <li class="cargando">Cargando...</li>
+        </ul>
+      </section>
+
+      <!-- Panel retos -->
+      <section id="panel-retos" hidden>
+        <form id="form-reto" class="form-reto" novalidate>
+          <h2 class="titulo-seccion">Crear reto</h2>
+          <div class="campo" id="campo-nombre">
+            <label for="nombre-reto">Nombre</label>
+            <input type="text" id="nombre-reto" placeholder="Ej. Semana sin plástico" />
+            <div class="error-campo" id="error-nombre"></div>
+          </div>
+          <div class="campo" id="campo-descripcion">
+            <label for="descripcion-reto">Descripción</label>
+            <input type="text" id="descripcion-reto" placeholder="En qué consiste el reto" />
+            <div class="error-campo" id="error-descripcion"></div>
+          </div>
+          <div class="fila-dos">
+            <div class="campo" id="campo-puntos">
+              <label for="puntos-reto">Puntos</label>
+              <input type="number" id="puntos-reto" min="1" placeholder="50" />
+              <div class="error-campo" id="error-puntos"></div>
+            </div>
+            <div class="campo" id="campo-icono">
+              <label for="icono-reto">Ícono</label>
+              <input type="text" id="icono-reto" maxlength="2" placeholder="🌱" />
+            </div>
+          </div>
+          <button type="submit" class="boton-primario">Crear reto</button>
+        </form>
+
+        <h2 class="titulo-seccion" style="margin-top:24px;">Retos existentes</h2>
+        <ul class="lista-gestion" id="lista-retos-gestion">
+          <li class="cargando">Cargando...</li>
+        </ul>
+      </section>
+    </main>
+
+    <nav class="nav-inferior">
+      <a href="registrar.html"><span class="icono">➕</span>Registrar</a>
+      <a href="historial.html"><span class="icono">📋</span>Historial</a>
+      <a href="retos.html"><span class="icono">🎯</span>Retos</a>
+      <a href="ranking.html"><span class="icono">🏆</span>Ranking</a>
+      <a href="impacto.html"><span class="icono">📊</span>Impacto</a>
+      <a href="gestionar.html" class="activo"><span class="icono">⚙️</span>Gestión</a>
+    </nav>
+  </div>
+
+  <script src="js/api-local.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/gestionar.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>

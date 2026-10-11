@@ -1,4 +1,7 @@
-/* Login visual de demostración. No envía credenciales ni usa base de datos. */
+/* ==========================================================================
+   login.js — Inicio de sesión (HU02)
+   Valida las credenciales contra el backend (datos quemados en memoria).
+   ========================================================================== */
 const formLogin = document.getElementById("form-login");
 const correo = document.getElementById("correo");
 const contrasena = document.getElementById("contrasena");
@@ -7,7 +10,7 @@ const avisoLogin = document.getElementById("aviso-login");
 const botonLogin = document.getElementById("btn-login");
 const botonVer = document.getElementById("alternar-contrasena");
 
-// Si ya existe una sesión simulada, lleva al usuario directamente al proyecto.
+// Si ya hay sesión guardada, entra directo.
 if (localStorage.getItem("ecoaccionSesion") || sessionStorage.getItem("ecoaccionSesion")) {
   window.location.replace("registrar.html");
 }
@@ -26,6 +29,11 @@ function limpiarErrores() {
   avisoLogin.classList.remove("visible");
 }
 
+function avisar(mensaje) {
+  avisoLogin.textContent = mensaje;
+  avisoLogin.classList.add("visible");
+}
+
 botonVer.addEventListener("click", () => {
   const ocultar = contrasena.type === "text";
   contrasena.type = ocultar ? "password" : "text";
@@ -34,7 +42,7 @@ botonVer.addEventListener("click", () => {
   contrasena.focus();
 });
 
-formLogin.addEventListener("submit", (evento) => {
+formLogin.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   limpiarErrores();
 
@@ -47,17 +55,36 @@ formLogin.addEventListener("submit", (evento) => {
     mostrarError("contrasena", "La contraseña debe tener al menos 4 caracteres.");
     valido = false;
   }
-
   if (!valido) {
-    avisoLogin.textContent = "Revisa los datos marcados para continuar.";
-    avisoLogin.classList.add("visible");
+    avisar("Revisa los datos marcados para continuar.");
     return;
   }
 
   botonLogin.disabled = true;
   botonLogin.textContent = "Ingresando...";
 
-  const almacenamiento = recordarme.checked ? localStorage : sessionStorage;
-  almacenamiento.setItem("ecoaccionSesion", correo.value.trim());
-  window.location.href = "registrar.html";
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo: correo.value.trim(), password: contrasena.value }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      const almacenamiento = recordarme.checked ? localStorage : sessionStorage;
+      almacenamiento.setItem("ecoaccionSesion", data.correo);
+      window.location.href = "registrar.html";
+    } else if (data.errores) {
+      Object.entries(data.errores).forEach(([campo, msj]) => mostrarError(campo, msj));
+      avisar("Revisa los datos marcados.");
+    } else {
+      avisar(data.mensaje || "No se pudo iniciar sesión.");
+    }
+  } catch (err) {
+    avisar("Error de conexión. Inténtalo de nuevo.");
+  } finally {
+    botonLogin.disabled = false;
+    botonLogin.textContent = "Iniciar sesión";
+  }
 });
