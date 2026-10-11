@@ -18,7 +18,8 @@ from urllib.parse import urlparse, parse_qs
 import db
 
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
-PUERTO = 5000
+# En local usa 5000. En un hosting (Render) toma el puerto de la variable PORT.
+PUERTO = int(os.environ.get("PORT", 5000))
 
 TIPOS = {
     ".html": "text/html; charset=utf-8",

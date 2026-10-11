@@ -1,72 +1,75 @@
 # EcoAccion 🌱
 
-Aplicación para registrar acciones sostenibles, ganar puntos y motivar la
-participación mediante retos y un ranking.
+App para registrar acciones sostenibles, ganar puntos y competir en un ranking.
+Funciona como **app instalable en el celular y 100% offline** (sin internet).
 
 ## Prototipo (Parcial II)
 
-MVP **sin base de datos real**: todos los datos son datos quemados en memoria
-(se reinician al reiniciar el servidor), como pide el enunciado.
+MVP **sin base de datos real**: los datos son **datos quemados** que viven en el
+propio navegador (JavaScript + almacenamiento local). No necesita servidor ni
+internet para funcionar, lo que cumple el requisito del enunciado.
 
-### Historias de usuario implementadas
+### Historias de usuario
 
-| HU | Historia | Pantalla / API |
-|----|----------|----------------|
-| HU01 | Registro de usuario | `registro.html` · `POST /api/registro` |
-| HU02 | Inicio de sesión | `login.html` · `POST /api/login` |
-| HU03 | Registrar acción sostenible | `registrar.html` · `POST /api/acciones` |
-| HU04 | Clasificar acción | selector de categorías · `GET /api/categorias` |
-| HU05 | Recibir puntos | suma automática al registrar |
-| HU06 | Visualizar impacto ambiental | `impacto.html` · `GET /api/estadisticas` |
-| HU07 | Consultar historial | `historial.html` · `GET /api/acciones` |
-| HU08 | Consultar ranking | `ranking.html` · `GET /api/ranking` |
-| HU09 | Retos sostenibles | `retos.html` · `GET/POST /api/retos/...` |
-| HU10 | Gestionar acciones y retos | `gestionar.html` · `/api/gestion/...` |
+| HU | Historia |
+|----|----------|
+| HU01 | Registro de usuario |
+| HU02 | Inicio de sesión |
+| HU03 | Registrar acción sostenible |
+| HU04 | Clasificar acción |
+| HU05 | Recibir puntos |
+| HU06 | Visualizar impacto ambiental |
+| HU07 | Consultar historial |
+| HU08 | Consultar ranking |
+| HU09 | Retos sostenibles |
+| HU10 | Gestionar acciones y retos |
 
-**Cambio del ciclo:** *Confirmación al registrar una acción sostenible*
-(HU03 + HU05). Al registrar, el sistema confirma el guardado, muestra los
-puntos obtenidos y el puntaje acumulado, y notifica si ocurre un error.
+**Cambio del ciclo:** *Confirmación al registrar una acción sostenible* (HU03 + HU05):
+al registrar, confirma el guardado, muestra los puntos ganados y el puntaje acumulado.
 
-## Tecnologías
+## Cómo funciona (arquitectura)
 
-- **Frontend:** HTML, CSS y JavaScript (sin frameworks).
-- **Backend:** Python. Dos formas de correrlo:
-  - `server.py` — solo librería estándar, **no requiere instalar nada**.
-  - `app.py` — con Flask (mismas rutas), para quien prefiera Flask.
-- **Datos:** en memoria (datos quemados), sin base de datos real.
+- **Frontend:** HTML, CSS y JavaScript. Es una **PWA** (se instala en el cel con ícono).
+- **Lógica y datos:** `frontend/js/api-local.js` responde todas las operaciones en
+  el navegador con datos quemados (guardados en `localStorage`). Por eso corre offline.
+- **Backend Python (opcional):** `backend/` tiene un servidor equivalente (`server.py`
+  sin dependencias, o `app.py` con Flask). No es necesario para la app, queda como
+  versión de servidor de referencia.
 
-## Cómo ejecutar (recomendado, sin instalar nada)
+## Verla en el computador
 
-Desde **Git Bash**, dentro de la carpeta del proyecto:
+Opción simple (no requiere instalar nada): abre `frontend/login.html`… o mejor,
+levanta un servidor estático para que la PWA funcione bien:
 
 ```bash
-cd backend
-python server.py
+cd frontend
+python -m http.server 8080
 ```
 
-Abre **http://127.0.0.1:5000**. Para detenerlo: `Ctrl + C`.
+Abre **http://127.0.0.1:8080/login.html**. Entra con **demo@eco.com / 1234** o crea tu cuenta.
 
-> Alternativa con Flask: `pip install -r backend/requirements.txt` y luego
-> `python backend/app.py`.
+## Usarla en el celular (offline, para la U)
 
-## Cómo entrar
+1. Sube la carpeta `frontend/` a un hosting estático gratis con HTTPS
+   (por ejemplo **Netlify Drop**: https://app.netlify.com/drop, arrastras la carpeta
+   y te da una URL). También sirve un "Static Site" de Render o GitHub Pages.
+2. En el celular, **con internet** (en tu casa), abre esa URL. Deja que cargue.
+3. Menú del navegador → **"Agregar a pantalla de inicio"**. Queda el ícono de la app.
+4. En la U, **sin internet**: abres la app desde el ícono y funciona normal.
+   Los datos se guardan en el teléfono.
 
-- Cuenta de demostración: **demo@eco.com** / contraseña **1234**
-- O crea tu propia cuenta desde "Regístrate aquí" (HU01).
+> Para reiniciar la demo a su estado inicial: en la consola del navegador escribe
+> `ecoReset()`, o borra los datos del sitio.
 
 ## Estructura
 
 ```
 EcoAccion/
-├── backend/
-│   ├── server.py         # Servidor sin dependencias (recomendado)
-│   ├── app.py            # Servidor con Flask (mismas rutas)
-│   ├── db.py             # Datos quemados + lógica de negocio
-│   └── requirements.txt
+├── backend/   (servidor Python opcional: server.py, app.py, db.py)
 └── frontend/
-    ├── login.html · registro.html
-    ├── registrar.html · historial.html · retos.html
-    ├── ranking.html · impacto.html · gestionar.html
+    ├── index.html, login.html, registro.html, registrar.html, historial.html,
+    │   retos.html, ranking.html, impacto.html, gestionar.html
+    ├── manifest.json, sw.js, icon-192.png, icon-512.png   (PWA)
     ├── css/estilos.css
-    └── js/ (auth, login, registro, registrar, historial, retos, ranking, impacto, gestionar)
+    └── js/  (api-local.js = backend en el navegador, + lógica de cada pantalla)
 ```
