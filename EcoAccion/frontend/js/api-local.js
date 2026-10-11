@@ -51,10 +51,10 @@
       ],
       acciones: [],
       retos: [
-        { id: 1, nombre: "Semana sin plástico", descripcion: "Evita los plásticos de un solo uso durante 7 días.", puntos: 50, icono: "♻️", fecha_limite: enDias(7) },
-        { id: 2, nombre: "Movilidad verde", descripcion: "Usa transporte sostenible 5 veces esta semana.", puntos: 40, icono: "🚲", fecha_limite: enDias(7) },
-        { id: 3, nombre: "Guardián del agua", descripcion: "Registra 3 acciones de ahorro de agua.", puntos: 30, icono: "💧", fecha_limite: enDias(14) },
-        { id: 4, nombre: "Sembrador", descripcion: "Planta o cuida un árbol este mes.", puntos: 60, icono: "🌳", fecha_limite: enDias(30) },
+        { id: 1, nombre: "Semana sin plástico", descripcion: "Evita los plásticos de un solo uso durante 7 días.", puntos: 50, icono: "♻️", fecha_limite: enDias(7), activo: true },
+        { id: 2, nombre: "Movilidad verde", descripcion: "Usa transporte sostenible 5 veces esta semana.", puntos: 40, icono: "🚲", fecha_limite: enDias(7), activo: true },
+        { id: 3, nombre: "Guardián del agua", descripcion: "Registra 3 acciones de ahorro de agua.", puntos: 30, icono: "💧", fecha_limite: enDias(14), activo: true },
+        { id: 4, nombre: "Sembrador", descripcion: "Planta o cuida un árbol este mes.", puntos: 60, icono: "🌳", fecha_limite: enDias(30), activo: true },
       ],
       participaciones: {}, // "usuarioId_retoId" -> {progreso, completado}
       seq: { usuario: 5, accion: 0, reto: 4 },
@@ -68,7 +68,10 @@
       if (raw) {
         const d = JSON.parse(raw);
         // Datos guardados por versiones anteriores: completa los campos nuevos de los retos.
-        (d.retos || []).forEach((r, i) => { if (!r.fecha_limite) r.fecha_limite = enDias(7 * (i + 1)); });
+        (d.retos || []).forEach((r, i) => {
+          if (!r.fecha_limite) r.fecha_limite = enDias(7 * (i + 1));
+          if (typeof r.activo !== "boolean") r.activo = true;
+        });
         return d;
       }
     } catch (e) {}
@@ -202,7 +205,8 @@
     const u = usuarioActual(d);
     const uid = u ? u.id : null;
     // HU09: solo se muestran los retos vigentes (con fecha límite no vencida).
-    const retos = d.retos.filter((r) => !retoVencido(r)).map((r) => {
+    // HU10: los retos desactivados desde Gestionar tampoco se muestran.
+    const retos = d.retos.filter((r) => !retoVencido(r) && r.activo !== false).map((r) => {
       const p = d.participaciones[uid + "_" + r.id];
       return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, fecha_limite: r.fecha_limite, participando: !!p, completado: !!(p && p.completado) };
     });
@@ -215,6 +219,7 @@
     const reto = d.retos.find((r) => r.id === retoId);
     if (!reto) return err(404, { mensaje: "El reto no existe." });
     if (retoVencido(reto)) return err(409, { mensaje: "Este reto ya venció, no es posible unirse." });
+    if (reto.activo === false) return err(409, { mensaje: "Este reto está desactivado." });
     const k = u.id + "_" + retoId;
     if (!d.participaciones[k]) d.participaciones[k] = { progreso: 0, completado: false };
     guardar(d);
@@ -227,6 +232,7 @@
     const reto = d.retos.find((r) => r.id === retoId);
     if (!reto) return err(404, { mensaje: "El reto no existe." });
     if (retoVencido(reto)) return err(409, { mensaje: "Este reto ya venció, no se pueden sumar sus puntos." });
+    if (reto.activo === false) return err(409, { mensaje: "Este reto está desactivado." });
     const k = u.id + "_" + retoId;
     const p = d.participaciones[k];
     if (!p) return err(409, { mensaje: "Primero debes unirte al reto." });
@@ -260,7 +266,7 @@
   function gestionListarRetos(d) {
     const retos = d.retos.map((r) => {
       const inscritos = Object.keys(d.participaciones).filter((k) => k.endsWith("_" + r.id)).length;
-      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, fecha_limite: r.fecha_limite, vencido: retoVencido(r), inscritos: inscritos };
+      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, fecha_limite: r.fecha_limite, vencido: retoVencido(r), activo: r.activo !== false, inscritos: inscritos };
     });
     return ok({ retos: retos });
   }
@@ -278,10 +284,19 @@
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaLimite)) errores.fecha_limite = "La fecha límite no es válida.";
     else if (fechaLimite < hoyISO()) errores.fecha_limite = "La fecha límite no puede ser anterior a hoy.";
     if (Object.keys(errores).length) return err(422, { errores: errores });
-    const reto = { id: nuevoId(d, "reto"), nombre: nombre, descripcion: descripcion, puntos: puntos, icono: icono, fecha_limite: fechaLimite };
+    const reto = { id: nuevoId(d, "reto"), nombre: nombre, descripcion: descripcion, puntos: puntos, icono: icono, fecha_limite: fechaLimite, activo: true };
     d.retos.push(reto);
     guardar(d);
     return R(201, { ok: true, mensaje: "Reto creado.", reto: reto });
+  }
+
+  // HU10: activar o desactivar un reto sin borrarlo (conserva inscritos y puntos ya dados).
+  function gestionAlternarReto(d, id) {
+    const reto = d.retos.find((r) => r.id === id);
+    if (!reto) return err(404, { mensaje: "El reto no existe." });
+    reto.activo = reto.activo === false;
+    guardar(d);
+    return ok({ mensaje: reto.activo ? "Reto activado." : "Reto desactivado.", activo: reto.activo });
   }
 
   function gestionEliminarReto(d, id) {
@@ -319,6 +334,7 @@
       if ((m = path.match(/^\/api\/retos\/(\d+)\/completar$/))) return completarReto(d, parseInt(m[1], 10));
       if ((m = path.match(/^\/api\/gestion\/acciones\/(\d+)\/eliminar$/))) return gestionEliminarAccion(d, parseInt(m[1], 10));
       if ((m = path.match(/^\/api\/gestion\/retos\/(\d+)\/eliminar$/))) return gestionEliminarReto(d, parseInt(m[1], 10));
+      if ((m = path.match(/^\/api\/gestion\/retos\/(\d+)\/alternar$/))) return gestionAlternarReto(d, parseInt(m[1], 10));
     }
     return err(404, { mensaje: "Ruta no encontrada." });
   }

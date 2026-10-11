@@ -764,6 +764,8 @@ body {
   cursor: pointer;
 }
 .boton-eliminar:hover { background: #f6dada; }
+.botones-gestion { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.fila-gestion.inactivo .texto-gestion { opacity: 0.55; }
 
 .form-reto { margin-bottom: 8px; }
 .fila-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

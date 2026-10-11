@@ -1,7 +1,7 @@
 /* Service Worker de EcoAccion (PWA).
    Cachea el "app shell" para que la app abra como instalada y funcione
    aunque la red esté lenta. Las APIs siempre van a la red (datos frescos). */
-const CACHE = "ecoaccion-v2";
+const CACHE = "ecoaccion-v3";
 const ASSETS = [
   "./", "index.html", "login.html", "registro.html", "registrar.html", "historial.html",
   "retos.html", "ranking.html", "impacto.html", "gestionar.html",

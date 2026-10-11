@@ -160,7 +160,7 @@ def init_db():
     for (nombre, descripcion, puntos, icono), dias in zip(retos_demo, plazos):
         RETOS.append({
             "id": _nuevo_id("reto"), "nombre": nombre, "descripcion": descripcion,
-            "puntos": puntos, "icono": icono, "fecha_limite": _en_dias(dias),
+            "puntos": puntos, "icono": icono, "fecha_limite": _en_dias(dias), "activo": True,
         })
 
 
@@ -422,7 +422,7 @@ def listar_retos(usuario_id=None):
 
     retos = []
     for r in RETOS:
-        if _reto_vencido(r):  # HU09: solo retos vigentes
+        if _reto_vencido(r) or not r.get("activo", True):  # HU09 vigentes, HU10 activos
             continue
         part = PARTICIPACIONES.get((uid, r["id"]))
         retos.append({
@@ -447,6 +447,8 @@ def unirse_reto(reto_id, usuario_id=None):
         raise ErrorValidacion(mensaje="El reto no existe.", codigo=404)
     if _reto_vencido(reto):
         raise ErrorValidacion(mensaje="Este reto ya venció, no es posible unirse.", codigo=409)
+    if not reto.get("activo", True):
+        raise ErrorValidacion(mensaje="Este reto está desactivado.", codigo=409)
 
     clave = (usuario["id"], reto_id)
     if clave not in PARTICIPACIONES:
@@ -463,6 +465,8 @@ def completar_reto(reto_id, usuario_id=None):
         raise ErrorValidacion(mensaje="El reto no existe.", codigo=404)
     if _reto_vencido(reto):
         raise ErrorValidacion(mensaje="Este reto ya venció, no se pueden sumar sus puntos.", codigo=409)
+    if not reto.get("activo", True):
+        raise ErrorValidacion(mensaje="Este reto está desactivado.", codigo=409)
 
     clave = (usuario["id"], reto_id)
     part = PARTICIPACIONES.get(clave)
@@ -517,6 +521,7 @@ def gestion_listar_retos():
             "id": r["id"], "nombre": r["nombre"], "descripcion": r["descripcion"],
             "puntos": r["puntos"], "icono": r["icono"], "inscritos": inscritos,
             "fecha_limite": r.get("fecha_limite"), "vencido": _reto_vencido(r),
+            "activo": r.get("activo", True),
         })
     return {"retos": retos}
 
@@ -549,10 +554,19 @@ def gestion_crear_reto(datos):
 
     reto = {
         "id": _nuevo_id("reto"), "nombre": nombre, "descripcion": descripcion,
-        "puntos": puntos, "icono": icono, "fecha_limite": fecha_limite,
+        "puntos": puntos, "icono": icono, "fecha_limite": fecha_limite, "activo": True,
     }
     RETOS.append(reto)
     return {"mensaje": "Reto creado.", "reto": reto}
+
+
+def gestion_alternar_reto(reto_id):
+    """HU10: activa o desactiva un reto sin borrarlo."""
+    reto = _reto(reto_id)
+    if reto is None:
+        raise ErrorValidacion(mensaje="El reto no existe.", codigo=404)
+    reto["activo"] = not reto.get("activo", True)
+    return {"mensaje": "Reto activado." if reto["activo"] else "Reto desactivado.", "activo": reto["activo"]}
 
 
 def gestion_eliminar_reto(reto_id):
