@@ -89,23 +89,47 @@ async function cargarRetosGestion() {
     listaRetosGestion.replaceChildren();
     data.retos.forEach((r) => {
       const li = document.createElement("li");
-      li.className = "fila-gestion";
+      li.className = "fila-gestion" + (r.activo ? "" : " inactivo");
+      const estado = r.vencido ? "vencido" : (r.activo ? "activo" : "desactivado");
       li.innerHTML = `
         <span class="icono-gestion" aria-hidden="true">${r.icono}</span>
         <div class="texto-gestion">
           <strong>${r.nombre} · ${r.puntos} pts</strong>
-          <small>${r.inscritos} participante(s)</small>
+          <small>${r.inscritos} participante(s) · ${estado} · vence ${r.fecha_limite}</small>
           <p>${r.descripcion}</p>
         </div>`;
+      // HU10: activar / desactivar sin borrar
+      const btnEstado = document.createElement("button");
+      btnEstado.className = "boton-secundario boton-mini";
+      btnEstado.textContent = r.activo ? "Desactivar" : "Activar";
+      btnEstado.addEventListener("click", () => alternarReto(r.id));
       const btn = document.createElement("button");
       btn.className = "boton-eliminar";
       btn.textContent = "Eliminar";
       btn.addEventListener("click", () => eliminarReto(r.id));
-      li.appendChild(btn);
+      const grupo = document.createElement("div");
+      grupo.className = "botones-gestion";
+      grupo.append(btnEstado, btn);
+      li.appendChild(grupo);
       listaRetosGestion.appendChild(li);
     });
   } catch (err) {
     listaRetosGestion.innerHTML = '<li class="cargando">No se pudieron cargar los retos.</li>';
+  }
+}
+
+async function alternarReto(id) {
+  try {
+    const res = await fetch(`/api/gestion/retos/${id}/alternar`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      mostrarAviso(data.mensaje, true);
+      cargarRetosGestion();
+    } else {
+      mostrarAviso(data.mensaje || "No se pudo cambiar el estado.", false);
+    }
+  } catch (err) {
+    mostrarAviso("Error de conexión.", false);
   }
 }
 
@@ -130,7 +154,7 @@ function marcarError(campo, mensaje) {
 }
 
 function limpiarErroresReto() {
-  ["nombre", "descripcion", "puntos"].forEach((c) => {
+  ["nombre", "descripcion", "puntos", "fecha_limite"].forEach((c) => {
     document.getElementById(`campo-${c}`).classList.remove("invalido");
     document.getElementById(`error-${c}`).textContent = "";
   });
@@ -145,6 +169,7 @@ formReto.addEventListener("submit", async (evento) => {
     descripcion: document.getElementById("descripcion-reto").value.trim(),
     puntos: document.getElementById("puntos-reto").value,
     icono: document.getElementById("icono-reto").value.trim() || "🌱",
+    fecha_limite: document.getElementById("fecha-limite-reto").value,
   };
 
   try {

@@ -137,6 +137,10 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             return self._ejecutar(lambda: db.gestion_eliminar_reto(int(m.group(1))))
 
+        m = re.match(r"^/api/gestion/retos/(\d+)/alternar$", ruta)
+        if m:
+            return self._ejecutar(lambda: db.gestion_alternar_reto(int(m.group(1))))
+
         self.send_error(404, "Ruta no encontrada")
 
     def log_message(self, formato, *args):

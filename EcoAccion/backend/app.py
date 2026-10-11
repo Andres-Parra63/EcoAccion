@@ -148,6 +148,11 @@ def gestion_crear_reto():
     return responder(lambda: db.gestion_crear_reto(request.get_json(silent=True) or {}), 201)
 
 
+@app.route("/api/gestion/retos/<int:reto_id>/alternar", methods=["POST"])
+def gestion_alternar_reto(reto_id):
+    return responder(lambda: db.gestion_alternar_reto(reto_id))
+
+
 @app.route("/api/gestion/retos/<int:reto_id>/eliminar", methods=["POST"])
 def gestion_eliminar_reto(reto_id):
     return responder(lambda: db.gestion_eliminar_reto(reto_id))

@@ -11,6 +11,12 @@ function mostrarAviso(mensaje, exito) {
   avisoRetos.className = "aviso " + (exito ? "exito" : "fallo");
 }
 
+// "2026-10-20" -> "20/10/2026"
+function formatearFecha(iso) {
+  const [a, m, d] = iso.split("-");
+  return `${d}/${m}/${a}`;
+}
+
 function crearTarjetaReto(reto) {
   const li = document.createElement("li");
   li.className = "reto" + (reto.completado ? " reto-completado" : "");
@@ -32,6 +38,11 @@ function crearTarjetaReto(reto) {
   const premio = document.createElement("span");
   premio.className = "premio-reto";
   premio.textContent = `+${reto.puntos} pts`;
+
+  // HU09: fecha límite del reto
+  const vence = document.createElement("small");
+  vence.className = "vence-reto";
+  vence.textContent = reto.fecha_limite ? `Vence el ${formatearFecha(reto.fecha_limite)}` : "";
 
   const acciones = document.createElement("div");
   acciones.className = "acciones-reto";
@@ -55,7 +66,7 @@ function crearTarjetaReto(reto) {
     acciones.appendChild(btnUnirse);
   }
 
-  cuerpo.append(nombre, descripcion, premio, acciones);
+  cuerpo.append(nombre, descripcion, premio, vence, acciones);
   li.append(icono, cuerpo);
   return li;
 }
@@ -69,7 +80,7 @@ async function cargarRetos() {
 
     listaRetos.replaceChildren();
     if (data.retos.length === 0) {
-      listaRetos.innerHTML = '<li class="cargando">Aún no hay retos disponibles.</li>';
+      listaRetos.innerHTML = '<li class="cargando">No hay retos vigentes por ahora.</li>';
       return;
     }
     data.retos.forEach((reto) => listaRetos.appendChild(crearTarjetaReto(reto)));
