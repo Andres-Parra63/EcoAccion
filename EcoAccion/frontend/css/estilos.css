@@ -718,6 +718,7 @@ body {
 
 .acciones-reto { display: block; }
 .estado-reto { font-size: 14px; font-weight: 600; color: var(--verde); }
+.vence-reto { display: block; font-size: 12px; color: #6b7280; margin-top: 4px; }
 
 /* -------------------------------------------------------------------------
    Gestión (HU10)

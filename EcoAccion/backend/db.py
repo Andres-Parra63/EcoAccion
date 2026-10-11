@@ -24,7 +24,7 @@ Historias cubiertas:
 Cambio del ciclo: confirmación al registrar (HU03 + HU05) -> registrar_accion
   devuelve mensaje de confirmación, puntos obtenidos y puntaje acumulado.
 """
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 
 class ErrorValidacion(Exception):
@@ -110,6 +110,19 @@ _seq = {"usuario": 0, "accion": 0, "reto": 0}
 _usuario_actual_id = None
 
 
+def _hoy_iso():
+    return date.today().isoformat()
+
+
+def _en_dias(n):
+    return (date.today() + timedelta(days=n)).isoformat()
+
+
+def _reto_vencido(reto):
+    """HU09: un reto está vencido si su fecha límite ya pasó."""
+    return bool(reto.get("fecha_limite")) and reto["fecha_limite"] < _hoy_iso()
+
+
 def _nuevo_id(tipo):
     _seq[tipo] += 1
     return _seq[tipo]
@@ -143,10 +156,11 @@ def init_db():
         ("Guardián del agua",   "Registra 3 acciones de ahorro de agua.",             30, "💧"),
         ("Sembrador",           "Planta o cuida un árbol este mes.",                  60, "🌳"),
     ]
-    for nombre, descripcion, puntos, icono in retos_demo:
+    plazos = [7, 7, 14, 30]
+    for (nombre, descripcion, puntos, icono), dias in zip(retos_demo, plazos):
         RETOS.append({
             "id": _nuevo_id("reto"), "nombre": nombre, "descripcion": descripcion,
-            "puntos": puntos, "icono": icono,
+            "puntos": puntos, "icono": icono, "fecha_limite": _en_dias(dias),
         })
 
 
@@ -408,10 +422,12 @@ def listar_retos(usuario_id=None):
 
     retos = []
     for r in RETOS:
+        if _reto_vencido(r):  # HU09: solo retos vigentes
+            continue
         part = PARTICIPACIONES.get((uid, r["id"]))
         retos.append({
             "id": r["id"], "nombre": r["nombre"], "descripcion": r["descripcion"],
-            "puntos": r["puntos"], "icono": r["icono"],
+            "puntos": r["puntos"], "icono": r["icono"], "fecha_limite": r.get("fecha_limite"),
             "participando": part is not None,
             "completado": bool(part and part["completado"]),
         })
@@ -426,8 +442,11 @@ def unirse_reto(reto_id, usuario_id=None):
     usuario = _buscar_usuario(usuario_id) if usuario_id else get_usuario_actual()
     if usuario is None:
         raise ErrorValidacion(mensaje="No hay un usuario autenticado.", codigo=401)
-    if _reto(reto_id) is None:
+    reto = _reto(reto_id)
+    if reto is None:
         raise ErrorValidacion(mensaje="El reto no existe.", codigo=404)
+    if _reto_vencido(reto):
+        raise ErrorValidacion(mensaje="Este reto ya venció, no es posible unirse.", codigo=409)
 
     clave = (usuario["id"], reto_id)
     if clave not in PARTICIPACIONES:
@@ -442,6 +461,8 @@ def completar_reto(reto_id, usuario_id=None):
     reto = _reto(reto_id)
     if reto is None:
         raise ErrorValidacion(mensaje="El reto no existe.", codigo=404)
+    if _reto_vencido(reto):
+        raise ErrorValidacion(mensaje="Este reto ya venció, no se pueden sumar sus puntos.", codigo=409)
 
     clave = (usuario["id"], reto_id)
     part = PARTICIPACIONES.get(clave)
@@ -495,6 +516,7 @@ def gestion_listar_retos():
         retos.append({
             "id": r["id"], "nombre": r["nombre"], "descripcion": r["descripcion"],
             "puntos": r["puntos"], "icono": r["icono"], "inscritos": inscritos,
+            "fecha_limite": r.get("fecha_limite"), "vencido": _reto_vencido(r),
         })
     return {"retos": retos}
 
@@ -515,12 +537,19 @@ def gestion_crear_reto(datos):
         errores["descripcion"] = "La descripción es obligatoria."
     if puntos <= 0:
         errores["puntos"] = "Los puntos deben ser un número mayor que 0."
+    fecha_limite = (datos.get("fecha_limite") or "").strip() or _en_dias(30)
+    try:
+        date.fromisoformat(fecha_limite)
+        if fecha_limite < _hoy_iso():
+            errores["fecha_limite"] = "La fecha límite no puede ser anterior a hoy."
+    except ValueError:
+        errores["fecha_limite"] = "La fecha límite no es válida."
     if errores:
         raise ErrorValidacion(errores=errores)
 
     reto = {
         "id": _nuevo_id("reto"), "nombre": nombre, "descripcion": descripcion,
-        "puntos": puntos, "icono": icono,
+        "puntos": puntos, "icono": icono, "fecha_limite": fecha_limite,
     }
     RETOS.append(reto)
     return {"mensaje": "Reto creado.", "reto": reto}

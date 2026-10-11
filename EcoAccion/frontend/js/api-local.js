@@ -28,6 +28,17 @@
   };
   function getCategoria(clave) { return CATEGORIAS[clave] || CAT_ANTERIORES[clave] || null; }
 
+  // ---- Fechas (HU09) ----
+  function hoyISO() {
+    const h = new Date();
+    return h.getFullYear() + "-" + String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0");
+  }
+  function enDias(n) {
+    const f = new Date(); f.setDate(f.getDate() + n);
+    return f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, "0") + "-" + String(f.getDate()).padStart(2, "0");
+  }
+  function retoVencido(r) { return !!r.fecha_limite && r.fecha_limite < hoyISO(); }
+
   // ---- Datos iniciales (datos quemados) ----
   function semilla() {
     return {
@@ -40,10 +51,10 @@
       ],
       acciones: [],
       retos: [
-        { id: 1, nombre: "Semana sin plástico", descripcion: "Evita los plásticos de un solo uso durante 7 días.", puntos: 50, icono: "♻️" },
-        { id: 2, nombre: "Movilidad verde", descripcion: "Usa transporte sostenible 5 veces esta semana.", puntos: 40, icono: "🚲" },
-        { id: 3, nombre: "Guardián del agua", descripcion: "Registra 3 acciones de ahorro de agua.", puntos: 30, icono: "💧" },
-        { id: 4, nombre: "Sembrador", descripcion: "Planta o cuida un árbol este mes.", puntos: 60, icono: "🌳" },
+        { id: 1, nombre: "Semana sin plástico", descripcion: "Evita los plásticos de un solo uso durante 7 días.", puntos: 50, icono: "♻️", fecha_limite: enDias(7) },
+        { id: 2, nombre: "Movilidad verde", descripcion: "Usa transporte sostenible 5 veces esta semana.", puntos: 40, icono: "🚲", fecha_limite: enDias(7) },
+        { id: 3, nombre: "Guardián del agua", descripcion: "Registra 3 acciones de ahorro de agua.", puntos: 30, icono: "💧", fecha_limite: enDias(14) },
+        { id: 4, nombre: "Sembrador", descripcion: "Planta o cuida un árbol este mes.", puntos: 60, icono: "🌳", fecha_limite: enDias(30) },
       ],
       participaciones: {}, // "usuarioId_retoId" -> {progreso, completado}
       seq: { usuario: 5, accion: 0, reto: 4 },
@@ -54,7 +65,12 @@
   function cargar() {
     try {
       const raw = localStorage.getItem(CLAVE);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const d = JSON.parse(raw);
+        // Datos guardados por versiones anteriores: completa los campos nuevos de los retos.
+        (d.retos || []).forEach((r, i) => { if (!r.fecha_limite) r.fecha_limite = enDias(7 * (i + 1)); });
+        return d;
+      }
     } catch (e) {}
     const d = semilla();
     guardar(d);
@@ -185,9 +201,10 @@
   function listarRetos(d) {
     const u = usuarioActual(d);
     const uid = u ? u.id : null;
-    const retos = d.retos.map((r) => {
+    // HU09: solo se muestran los retos vigentes (con fecha límite no vencida).
+    const retos = d.retos.filter((r) => !retoVencido(r)).map((r) => {
       const p = d.participaciones[uid + "_" + r.id];
-      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, participando: !!p, completado: !!(p && p.completado) };
+      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, fecha_limite: r.fecha_limite, participando: !!p, completado: !!(p && p.completado) };
     });
     return ok({ retos: retos });
   }
@@ -195,7 +212,9 @@
   function unirseReto(d, retoId) {
     const u = usuarioActual(d);
     if (!u) return err(401, { mensaje: "No hay un usuario autenticado." });
-    if (!d.retos.some((r) => r.id === retoId)) return err(404, { mensaje: "El reto no existe." });
+    const reto = d.retos.find((r) => r.id === retoId);
+    if (!reto) return err(404, { mensaje: "El reto no existe." });
+    if (retoVencido(reto)) return err(409, { mensaje: "Este reto ya venció, no es posible unirse." });
     const k = u.id + "_" + retoId;
     if (!d.participaciones[k]) d.participaciones[k] = { progreso: 0, completado: false };
     guardar(d);
@@ -207,6 +226,7 @@
     if (!u) return err(401, { mensaje: "No hay un usuario autenticado." });
     const reto = d.retos.find((r) => r.id === retoId);
     if (!reto) return err(404, { mensaje: "El reto no existe." });
+    if (retoVencido(reto)) return err(409, { mensaje: "Este reto ya venció, no se pueden sumar sus puntos." });
     const k = u.id + "_" + retoId;
     const p = d.participaciones[k];
     if (!p) return err(409, { mensaje: "Primero debes unirte al reto." });
@@ -240,7 +260,7 @@
   function gestionListarRetos(d) {
     const retos = d.retos.map((r) => {
       const inscritos = Object.keys(d.participaciones).filter((k) => k.endsWith("_" + r.id)).length;
-      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, inscritos: inscritos };
+      return { id: r.id, nombre: r.nombre, descripcion: r.descripcion, puntos: r.puntos, icono: r.icono, fecha_limite: r.fecha_limite, vencido: retoVencido(r), inscritos: inscritos };
     });
     return ok({ retos: retos });
   }
@@ -250,12 +270,15 @@
     const descripcion = (body.descripcion || "").trim();
     const icono = (body.icono || "🌱").trim() || "🌱";
     const puntos = parseInt(body.puntos, 10);
+    const fechaLimite = (body.fecha_limite || "").trim() || enDias(30);
     const errores = {};
     if (!nombre) errores.nombre = "El nombre del reto es obligatorio.";
     if (!descripcion) errores.descripcion = "La descripción es obligatoria.";
     if (!(puntos > 0)) errores.puntos = "Los puntos deben ser un número mayor que 0.";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaLimite)) errores.fecha_limite = "La fecha límite no es válida.";
+    else if (fechaLimite < hoyISO()) errores.fecha_limite = "La fecha límite no puede ser anterior a hoy.";
     if (Object.keys(errores).length) return err(422, { errores: errores });
-    const reto = { id: nuevoId(d, "reto"), nombre: nombre, descripcion: descripcion, puntos: puntos, icono: icono };
+    const reto = { id: nuevoId(d, "reto"), nombre: nombre, descripcion: descripcion, puntos: puntos, icono: icono, fecha_limite: fechaLimite };
     d.retos.push(reto);
     guardar(d);
     return R(201, { ok: true, mensaje: "Reto creado.", reto: reto });

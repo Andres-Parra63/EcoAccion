@@ -94,7 +94,7 @@ async function cargarRetosGestion() {
         <span class="icono-gestion" aria-hidden="true">${r.icono}</span>
         <div class="texto-gestion">
           <strong>${r.nombre} · ${r.puntos} pts</strong>
-          <small>${r.inscritos} participante(s)</small>
+          <small>${r.inscritos} participante(s) · ${r.vencido ? "vencido" : "vence " + r.fecha_limite}</small>
           <p>${r.descripcion}</p>
         </div>`;
       const btn = document.createElement("button");
@@ -130,7 +130,7 @@ function marcarError(campo, mensaje) {
 }
 
 function limpiarErroresReto() {
-  ["nombre", "descripcion", "puntos"].forEach((c) => {
+  ["nombre", "descripcion", "puntos", "fecha_limite"].forEach((c) => {
     document.getElementById(`campo-${c}`).classList.remove("invalido");
     document.getElementById(`error-${c}`).textContent = "";
   });
@@ -145,6 +145,7 @@ formReto.addEventListener("submit", async (evento) => {
     descripcion: document.getElementById("descripcion-reto").value.trim(),
     puntos: document.getElementById("puntos-reto").value,
     icono: document.getElementById("icono-reto").value.trim() || "🌱",
+    fecha_limite: document.getElementById("fecha-limite-reto").value,
   };
 
   try {
